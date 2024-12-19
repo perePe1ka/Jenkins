@@ -1,41 +1,60 @@
 pipeline {
-    agent none  // Указывает, что пайплайн не должен использовать глобальный агент
+    agent none
+
     stages {
         stage('Prepare Environment') {
             agent {
-                docker { image 'maven:3.8.1-openjdk-11' }  // Используем Docker-контейнер для этой стадии
+                docker {
+                    image 'maven:3.8.1-openjdk-11'
+                    // Если здесь Docker не нужен – можно оставить как есть.
+                    // Если нужен docker внутри этого контейнера, придется сделать аналогично, как для dind.
+                }
             }
             steps {
                 echo 'Installing Maven...'
                 sh 'mvn --version'
             }
         }
+
         stage('Build') {
             agent {
-                docker { image 'maven:3.8.1-openjdk-11' }
+                docker {
+                    image 'maven:3.8.1-openjdk-11'
+                    // Здесь мы просто собираем проект, docker не нужен.
+                }
             }
             steps {
                 echo 'Building the project...'
                 sh 'mvn clean package'
             }
         }
+
         stage('Docker Build') {
             agent {
-                docker { image 'docker:19.03.12-dind' }  // Используем Docker для создания образа
+                docker {
+                    image 'docker:19.03.12-dind'
+                    args '--privileged -v /var/run/docker.sock:/var/run/docker.sock'
+                }
             }
             steps {
                 script {
-                    docker.build("myapp:latest")  // Создаём Docker-образ
+                    // Теперь в этом контейнере есть доступ к /var/run/docker.sock, 
+                    // и можно выполнять docker build.
+                    docker.build("myapp:latest")
                 }
             }
         }
+
         stage('Run Docker') {
             agent {
-                docker { image 'docker:19.03.12-dind' }
+                docker {
+                    image 'docker:19.03.12-dind'
+                    args '--privileged -v /var/run/docker.sock:/var/run/docker.sock'
+                }
             }
             steps {
                 script {
-                    docker.image("myapp:latest").run("-p 8080:8080")  // Пробрасываем порт 8080
+                    docker.image("myapp:latest").run("-p 8080:8080")
                 }
             }
         }
