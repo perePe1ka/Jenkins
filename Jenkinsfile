@@ -3,7 +3,7 @@ pipeline {
 
     stages {
         stage('Prepare Environment') {
-            agent { label 'docker-agent' } // Явно указываем агента
+            agent { label 'agent' } // Используем ноду 'agent'
             steps {
                 echo 'Installing Maven...'
                 sh 'mvn --version'
@@ -11,7 +11,7 @@ pipeline {
         }
 
         stage('Build') {
-            agent { label 'docker-agent' } // Указываем, что сборка на агенте
+            agent { label 'agent' } // Сборка выполняется на 'agent'
             steps {
                 echo 'Building the project...'
                 sh 'mvn clean package'
@@ -19,7 +19,7 @@ pipeline {
         }
 
         stage('Docker Build') {
-            agent { label 'docker-agent' } // Используем агента с Docker
+            agent { label 'agent' } // Docker команды выполняются на 'agent'
             steps {
                 script {
                     echo 'Building Docker image...'
@@ -29,7 +29,7 @@ pipeline {
         }
 
         stage('Run Docker') {
-            agent { label 'docker-agent' } // Контейнер запускается на агенте
+            agent { label 'agent' } // Запуск контейнера выполняется на 'agent'
             steps {
                 script {
                     echo 'Running Docker container...'
