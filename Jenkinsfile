@@ -1,39 +1,41 @@
 pipeline {
-    agent none
-
+    agent none  // Указывает, что пайплайн не должен использовать глобальный агент
     stages {
         stage('Prepare Environment') {
-            agent { label 'agent' } // Используем ноду 'agent'
+            agent {
+                docker { image 'maven:3.8.1-openjdk-11' }  // Используем Docker-контейнер для этой стадии
+            }
             steps {
                 echo 'Installing Maven...'
                 sh 'mvn --version'
             }
         }
-
         stage('Build') {
-            agent { label 'agent' } // Сборка выполняется на 'agent'
+            agent {
+                docker { image 'maven:3.8.1-openjdk-11' }
+            }
             steps {
                 echo 'Building the project...'
                 sh 'mvn clean package'
             }
         }
-
         stage('Docker Build') {
-            agent { label 'agent' } // Docker команды выполняются на 'agent'
+            agent {
+                docker { image 'docker:19.03.12-dind' }  // Используем Docker для создания образа
+            }
             steps {
                 script {
-                    echo 'Building Docker image...'
-                    docker.build("myapp:latest")
+                    docker.build("myapp:latest")  // Создаём Docker-образ
                 }
             }
         }
-
         stage('Run Docker') {
-            agent { label 'agent' } // Запуск контейнера выполняется на 'agent'
+            agent {
+                docker { image 'docker:19.03.12-dind' }
+            }
             steps {
                 script {
-                    echo 'Running Docker container...'
-                    docker.image("myapp:latest").run("-p 8080:8080")
+                    docker.image("myapp:latest").run("-p 8080:8080")  // Пробрасываем порт 8080
                 }
             }
         }
